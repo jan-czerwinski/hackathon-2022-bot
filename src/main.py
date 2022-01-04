@@ -144,7 +144,7 @@ class Player(GameObject):
     def __init__(self, position: Vector2D):
         super().__init__(position)
         self.keyboard = Controller()
-        
+
         self.last_shot_time = time()
         self.moving = None
 
@@ -156,7 +156,7 @@ class Player(GameObject):
             self.last_shot_time = time()
             self.keyboard.press(Key.space)
             self.keyboard.release(Key.space)
-            
+
     def move(self):
         if self.moving is None:
             self.keyboard.release(Key.left)
@@ -170,7 +170,7 @@ class Player(GameObject):
         elif self.moving == 'right':
             self.keyboard.press(Key.right)
             self.keyboard.release(Key.left)
-    
+
 
 class Game:
     sct = None
@@ -236,7 +236,7 @@ class Game:
         if weight > 0:
             self.player.setMoving("right")
         elif weight == 0:
-            self.player.setMoving("None")
+            self.player.setMoving(None)
         else:
             self.player.setMoving("left")
 
@@ -265,7 +265,7 @@ class Game:
             cv2.putText(debug_img, f'enm', enemy.getPositionTuple(), font,
                         font_scale, color, 1, cv2.LINE_AA)
 
-        cv2.putText(debug_img, f't: {time() - self.startTime}', (0,50), font,
+        cv2.putText(debug_img, f't: {time() - self.startTime}', (0, 50), font,
                     font_scale, (255, 255, 255), 1, cv2.LINE_AA)
 
         name = 'debug image'
@@ -363,12 +363,11 @@ class Game:
                     self.player.shoot()
                     return
 
-    def togglePlayingOnEnter(self,key):
-               if key == Key.enter:
-                    self.playing = not self.playing
+    def togglePlayingOnEnter(self, key):
+        if key == Key.enter:
+            self.playing = not self.playing
+            self.player.setMoving(None)
 
-
-                        
     def main(self):
         self.gameDimensions = self.getFrame()
 
@@ -377,7 +376,7 @@ class Game:
             on_release=None)
 
         listener.start()
-        
+
         FPS = 50
         # time_sleep = (FPS - time() % FPS) / 1000
         while True:
@@ -386,14 +385,14 @@ class Game:
             self.getFrame()
             self.detect_contours()
             self.updatePositions()
-            
+
             if self.playing:
                 self.shootAi()
                 self.playerMovementAi()
                 self.player.move()
 
             self.showDebugImage()
-            
+
             # will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
             # sleep(will_sleep)
             if (cv2.waitKey(1) & 0xFF) == ord('q'):
