@@ -140,16 +140,16 @@ class Bullet(GameObject):
 
 class Player(GameObject):
     keyboard = None
+
     def __init__(self, position: Vector2D):
         super().__init__(position)
         self.keyboard = Controller()
         
         self.last_shot_time = time()
         self.moving = None
-        
+
     def setMoving(self, moving):
         self.moving = moving
-
 
     def shoot(self):
         if time() - self.last_shot_time > 1.1:
@@ -172,9 +172,6 @@ class Player(GameObject):
             self.keyboard.release(Key.left)
     
 
-
-
-
 class Game:
     sct = None
     bounding_box = {'top': 0, 'left': 0, 'width': 1920, 'height': 1080}
@@ -187,10 +184,17 @@ class Game:
         self.startTime = time()
         self.playing = False
 
-
         self.bullets = []
         self.enemies = []
         self.player = Player(Vector2D(0, 0))
+
+    def findUnavoidableBullets(self):
+        player_pos = self.player.getPosition()
+        bullets_horizontal = list(
+            filter(lambda dist: abs(dist.getPosition().x) < (PLAYER_WIDTH * 2.5) and abs(dist.getPosition().y) < 70,
+                   self.bullets))
+        if bullets_horizontal:
+            print(bullets_horizontal)
 
     def playerMovementAi(self):
         player_pos = self.player.getPosition()
@@ -200,7 +204,7 @@ class Game:
 
         distances = [x.getPosition() - player_pos for x in self.bullets]
         bullets_above = list(
-            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH*1.5) and abs(dist.y) < 150, distances))
+            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH * 1.2) and abs(dist.y) < 200, distances))
 
         weight = 0
         bullets_around_poss = [bul.getPosition() for bul in bullets_around]
@@ -213,22 +217,22 @@ class Game:
         #     weight /= len(bullets_above_poss)
 
         for bullet_vec in bullets_above:
-            weight += 1/abs(bullet_vec) * \
+            weight += 1 / abs(bullet_vec) * \
                       (1 if bullet_vec.x < 0 else -1)
-        weight *= 1200
+        weight *= 1400
 
-        distance_from_center = self.gameDimensions[0] / 2 -player_pos.x
-
+        distance_from_center = self.gameDimensions[0] / 2 - player_pos.x
 
         center_sign = 1 if distance_from_center >= 0 else -1
-        weight += abs(distance_from_center/500) ** 2 * center_sign
+        weight += abs(distance_from_center / 800) ** 2 * center_sign
 
-        print(weight)
+        # print(weight)
 
         weight = weight
         # print(weight)
 
         # - left + right
+        self.findUnavoidableBullets()
         if weight > 0:
             self.player.setMoving("right")
         elif weight == 0:
@@ -237,10 +241,6 @@ class Game:
             self.player.setMoving("left")
 
         # print(bullets_above)
-
-
-
-
 
     def showDebugImage(self):
         debug_img = self.grabbedFrame
@@ -330,7 +330,7 @@ class Game:
         cv2.rectangle(self.grabbedFrame, (0, 0), (80, 40), (0, 0, 0), -1)
         return w, h
 
-    def willBulletHitEnemy(self):
+    def shootAi(self):
         for enemy in self.enemies:
             if enemy.getDirection() is not None:
 
@@ -345,13 +345,11 @@ class Game:
                 enemyNewX = enemy.getPosition().x + enemy.getDirection() * enemySpeed * timeBulletHit
 
                 if enemyNewX < PLAYER_WIDTH / 2 or enemyNewX > self.gameDimensions[0] - (PLAYER_WIDTH / 2):
-                    return 0
+                    return
 
                 if enemyNewX - PLAYER_WIDTH / 4 < self.player.getPosition().x < enemyNewX + PLAYER_WIDTH / 4:
                     self.player.shoot()
-                    print(enemyNewX)
-                    return enemyNewX
-        return 0 
+                    return
 
     def togglePlayingOnEnter(self,key):
                if key == Key.enter:
@@ -376,16 +374,11 @@ class Game:
             self.getFrame()
             self.detect_contours()
             self.updatePositions()
-       
-
-        
             
             if self.playing:
-                self.willBulletHitEnemy()
+                self.shootAi()
                 self.playerMovementAi()
                 self.player.move()
-                self.willBulletHitEnemy()
-
 
             self.showDebugImage()
             
