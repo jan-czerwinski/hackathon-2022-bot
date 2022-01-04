@@ -160,15 +160,14 @@ class Game:
 
         distances = [x.getPosition() - playerPos for x in self.bullets]
 
-
-        #bullets directly above and close
-        bullets_above = list(filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH/2 +20) and abs(dist.y) < 100, distances))
+        # bullets directly above and close
+        bullets_above = list(
+            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH / 2 + 20) and abs(dist.y) < 100, distances))
 
         weight = 0
         for bullet_vec in bullets_above:
             weight += abs(bullet_vec) * \
-                (1 if bullet_vec.x < 0 else -1)
-
+                      (1 if bullet_vec.x < 0 else -1)
 
         if weight > 0:
             self.moving = "right"
@@ -180,11 +179,6 @@ class Game:
         print(self.moving)
 
         # print(bullets_above)
-
-
-
-
-
 
     def move_player(self):
         if self.moving is None:
@@ -295,7 +289,7 @@ class Game:
         for enemy in self.enemies:
             if enemy.getDirection() is not None:
 
-                enemySpeed  = 3
+                enemySpeed = 3
                 bulletSpeed = 8
 
                 enemy_vec = self.player.getPosition() - enemy.getPosition()
@@ -305,12 +299,11 @@ class Game:
                 enemyNewX = enemy_vec.x + enemy.getDirection() * enemySpeed * timeBulletHit
 
                 screenWidth = self.bounding_box['width']
-                if enemyNewX > screenWidth-PLAYER_WIDTH/2:
+                if enemyNewX > screenWidth - PLAYER_WIDTH / 2:
                     enemyNewX - screenWidth
                 enemyNewX = abs(enemyNewX)
 
-
-                if enemyNewX-PLAYER_WIDTH/2 < self.player.getPosition().x < enemyNewX+PLAYER_WIDTH/2:
+                if enemyNewX - PLAYER_WIDTH / 2 < self.player.getPosition().x < enemyNewX + PLAYER_WIDTH / 2:
                     self.shoot()
 
     def main(self):
@@ -328,11 +321,12 @@ class Game:
 
             self.ai()
             # self.move_player()
-            will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
-            sleep(will_sleep)
+
             self.move_player()
             self.willBulletHitEnemy()
 
+            will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
+            sleep(will_sleep)
             if (cv2.waitKey(1) & 0xFF) == ord('q'):
                 cv2.destroyAllWindows()
                 break
