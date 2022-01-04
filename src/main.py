@@ -162,16 +162,18 @@ class Game:
         
         
         #bullets directly above and close 
-        bullets_above = list(filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH/2 -2) and abs(dist.y) < 100, distances))
+        bullets_above = list(filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH/2 +20) and abs(dist.y) < 100, distances))
         
         weight = 0
         for bullet_vec in bullets_above:
-            weight += 1/(abs(bullet_vec)-300) * \
+            weight += abs(bullet_vec) * \
                 (1 if bullet_vec.x < 0 else -1)
 
 
         if weight > 0:
             self.moving = "right"
+        elif weight == 0:
+            self.moving = None
         else:
             self.moving = "left"
             
