@@ -9,6 +9,7 @@ from pynput.keyboard import Key, Controller, Listener
 import math
 import copy
 
+
 class Vector2D:
     """A two-dimensional vector with Cartesian coordinates."""
 
@@ -77,8 +78,10 @@ class Vector2D:
         """Return the vector's components in polar coordinates."""
         return self.__abs__(), math.atan2(self.y, self.x)
 
-BULLET_WIDTH =  8
-PLAYER_WIDTH = 20 # TODO CHECK THESE
+
+BULLET_WIDTH = 8
+PLAYER_WIDTH = 20  # TODO CHECK THESE
+
 
 class GameObject:
     def __init__(self, position: Vector2D):
@@ -180,11 +183,10 @@ class Game:
                           2)
         font = cv2.FONT_HERSHEY_SIMPLEX
 
-
         font_scale = 0.7
         color = (255, 0, 255)
         cv2.putText(debug_img, 'pl', self.player.getPositionTuple(), font,
-                            font_scale, color, 1, cv2.LINE_AA)
+                    font_scale, color, 1, cv2.LINE_AA)
 
         for bullet in self.bullets:
             cv2.putText(debug_img, 'bul', bullet.getPositionTuple(), font,
@@ -194,7 +196,7 @@ class Game:
             cv2.putText(debug_img, f'enm {enemy.getDirection()}', enemy.getPositionTuple(), font,
                         font_scale, color, 1, cv2.LINE_AA)
         cv2.imshow("debug image", debug_img)
-        
+
     def detect_contours(self):
         gray = cv2.cvtColor(self.grabbedFrame, cv2.COLOR_BGR2GRAY)
 
@@ -213,9 +215,10 @@ class Game:
 
         enemies_positions_vec = [Vector2D(pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in enemies_positions]
         bullets_positions_vec = [Vector2D(pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in bullets_positions]
-
-        player_idx, player_contour = max(enumerate(enemies_positions), key=lambda x: x[1][1])
-        enemies_positions.pop(player_idx)
+        if enemies_positions:
+            player_idx, player_contour = max(enumerate(enemies_positions), key=lambda x: x[1][1])
+            enemies_positions.pop(player_idx)
+            self.player.updatePosition(Vector2D(player_contour[0], player_contour[1]))
 
         prev_enemies_obj = copy.deepcopy(self.enemies)
         self.enemies = [Enemy(Vector2D(cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in enemies_positions]
@@ -225,21 +228,18 @@ class Game:
             for enemy in self.enemies:
                 enemy.setDirection(prev_enemies_obj)
 
-
-        self.player.updatePosition(Vector2D(player_contour[0], player_contour[1]))
-
     def getFrame(self):
         frame_raw = self.sct.grab(self.bounding_box)
         self.grabbedFrame = np.array(frame_raw)
         # self.grabbedFrame = cv2.imread("sample.png")
-        cv2.rectangle(self.grabbedFrame, (0, 0), (80, 50), (0,0,0), -1)
+        cv2.rectangle(self.grabbedFrame, (0, 0), (80, 50), (0, 0, 0), -1)
 
     def main(self):
         self.getFrame()
 
         FPS = 50
         while True:
-            sleep((FPS - time() % FPS)/1000)
+            sleep((FPS - time() % FPS) / 1000)
             self.getFrame()
             self.detect_contours()
             # move_player(keyboard, 'shoot')
@@ -254,7 +254,6 @@ class Game:
 if __name__ == '__main__':
     game = Game()
     game.main()
-
 
 '''
 OG game has 50 fps
