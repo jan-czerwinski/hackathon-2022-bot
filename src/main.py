@@ -1,3 +1,4 @@
+import random
 from time import sleep, time
 from typing import Tuple, Any
 
@@ -219,12 +220,13 @@ class Game:
         for bullet_vec in bullets_above:
             weight += 1 / abs(bullet_vec) * \
                       (1 if bullet_vec.x < 0 else -1)
-        weight *= 1400
+        weight *= 1600
 
         distance_from_center = self.gameDimensions[0] / 2 - player_pos.x
 
         center_sign = 1 if distance_from_center >= 0 else -1
-        weight += abs(distance_from_center / 800) ** 2 * center_sign
+        weight += abs(distance_from_center / 1000) ** 2 * center_sign
+        weight += random.uniform(-0.05, 0.05)
 
         # print(weight)
 
