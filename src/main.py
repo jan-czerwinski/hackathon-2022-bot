@@ -232,7 +232,8 @@ class Game:
         frame_raw = self.sct.grab(self.bounding_box)
         self.grabbedFrame = np.array(frame_raw)
         # self.grabbedFrame = cv2.imread("sample.png")
-        cv2.rectangle(self.grabbedFrame, (0, 0), (80, 50), (0, 0, 0), -1)
+        # remove score and lives text
+        cv2.rectangle(self.grabbedFrame, (0, 0), (80, 40), (0, 0, 0), -1)
 
     def main(self):
         self.getFrame()
