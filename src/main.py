@@ -92,7 +92,6 @@ class GameObject:
         self.position = new_pos
         return self.position
 
-
     def getId(self) -> int:
         return id(self)
 
@@ -116,18 +115,16 @@ class Enemy(GameObject):
     def __init__(self, position: Vector2D):
         super().__init__(position)
         self.willBeHit = False
-        
+
     def setDirection(self, old_objects):
         old_obj = min(old_objects, key=lambda x: abs(
             self.position - x.getPosition()))
         old_pos = old_obj.getPosition()
-        
+
         if old_pos.x != self.position.x:
             self.direction = 1 if old_pos.x < self.position.x else -1
         else:
             self.direction = old_obj.getDirection()
-
-
 
 
 class Bullet(GameObject):
@@ -142,8 +139,8 @@ class Player(GameObject):
         # self.last_shoot_time = time()
 
     # def checkShootAbility(self):
-        # if time() - self.last_shoot_time > 1:
-            # self.can_shoot = True
+    # if time() - self.last_shoot_time > 1:
+    # self.can_shoot = True
 
 
 class Game:
@@ -183,7 +180,6 @@ class Game:
             self.moving = None
         else:
             self.moving = "left"
-
 
         # print(bullets_above)
 
@@ -264,7 +260,7 @@ class Game:
                 enumerate(enemies_positions), key=lambda x: x[1][1])
             enemies_positions.pop(player_idx)
             self.player.updatePosition(
-                Vector2D(player_contour[0], player_contour[1]))
+                Vector2D(player_contour[0] + player_contour[2] / 2, player_contour[1] + player_contour[3] / 2))
 
         prev_enemies_obj = copy.deepcopy(self.enemies)
         self.enemies = [Enemy(Vector2D(
@@ -298,8 +294,7 @@ class Game:
         # if not self.player.can_shoot:
         #     self.player.checkShootAbility()
         #     return 
-        
-        
+
         for enemy in self.enemies:
             if enemy.getDirection() is not None:
 
@@ -314,7 +309,7 @@ class Game:
 
                 screenWidth = self.bounding_box['width'] - PLAYER_WIDTH
                 if enemyNewX > screenWidth - PLAYER_WIDTH / 2:
-                    enemyNewX = screenWidth - (enemyNewX-screenWidth)
+                    enemyNewX = screenWidth - (enemyNewX - screenWidth)
                 enemyNewX = abs(enemyNewX) + PLAYER_WIDTH/2
 
                 if enemyNewX - PLAYER_WIDTH / 2 < self.player.getPosition().x < enemyNewX + PLAYER_WIDTH / 2:
