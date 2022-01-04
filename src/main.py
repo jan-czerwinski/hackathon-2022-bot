@@ -143,7 +143,7 @@ class Player(GameObject):
     def __init__(self, position: Vector2D):
         super().__init__(position)
         self.keyboard = Controller()
-
+        
         self.last_shot_time = time()
         self.moving = None
         
@@ -157,7 +157,7 @@ class Player(GameObject):
             self.keyboard.press(Key.space)
             self.keyboard.release(Key.space)
             
-    def move_player(self):
+    def move(self):
         if self.moving is None:
             self.keyboard.release(Key.left)
             self.keyboard.release(Key.right)
@@ -170,11 +170,9 @@ class Player(GameObject):
         elif self.moving == 'right':
             self.keyboard.press(Key.right)
             self.keyboard.release(Key.left)
-        
-        
-    # def checkShootAbility(self):
-    # if time() - self.last_shoot_time > 1:
-    # self.can_shoot = True
+    
+
+
 
 
 class Game:
@@ -187,6 +185,7 @@ class Game:
         self.detectedContours = None
         self.gameDimensions = (0, 0)
         self.startTime = time()
+        self.playing = False
 
 
         self.bullets = []
@@ -243,7 +242,7 @@ class Game:
 
 
 
-    def showDebugImage(self, enemyX):
+    def showDebugImage(self):
         debug_img = self.grabbedFrame
         for cnt in self.detectedContours:
             (x, y, w, h) = cnt
@@ -354,9 +353,21 @@ class Game:
                     return enemyNewX
         return 0 
 
+    def togglePlayingOnEnter(self,key):
+               if key == Key.enter:
+                    self.playing = not self.playing
+
+
+                        
     def main(self):
         self.gameDimensions = self.getFrame()
 
+        listener = Listener(
+            on_press=self.togglePlayingOnEnter,
+            on_release=None)
+
+        listener.start()
+        
         FPS = 50
         # time_sleep = (FPS - time() % FPS) / 1000
         while True:
@@ -365,14 +376,19 @@ class Game:
             self.getFrame()
             self.detect_contours()
             self.updatePositions()
-            self.willBulletHitEnemy()
-            self.showDebugImage()
+       
 
+        
             
-            self.playerMovementAi()
-            self.player.move()
-            self.willBulletHitEnemy()
+            if self.playing:
+                self.willBulletHitEnemy()
+                self.playerMovementAi()
+                self.player.move()
+                self.willBulletHitEnemy()
 
+
+            self.showDebugImage()
+            
             # will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
             # sleep(will_sleep)
             if (cv2.waitKey(1) & 0xFF) == ord('q'):
