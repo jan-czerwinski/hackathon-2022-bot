@@ -210,7 +210,7 @@ class Game:
 
     def updatePositions(self):
 
-        enemies_positions = [ob for ob in self.detectedContours if 50 < ob[2] < 70]  # get big objects in x dir
+        enemies_positions = [ob for ob in self.detectedContours if 50 < ob[2]]  # get big objects in x dir
         bullets_positions = [ob for ob in self.detectedContours if 6 < ob[2] < 15]  # get smol objects in x dir
 
         enemies_positions_vec = [Vector2D(pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in enemies_positions]
