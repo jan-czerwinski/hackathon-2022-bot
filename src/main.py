@@ -153,6 +153,7 @@ class Game:
         self.sct = mss()
         self.grabbedFrame = None
         self.detectedContours = None
+        self.gameDimensions = (None, None)
 
         self.moving = None
 
@@ -289,7 +290,8 @@ class Game:
         (x, y, w, h) = cnt
         self.grabbedFrame = self.grabbedFrame[y:h + y, x:w + x]
         cv2.rectangle(self.grabbedFrame, (0, 0), (80, 40), (0, 0, 0), -1)
-
+        return w, h
+    
     def willBulletHitEnemy(self):
         # if not self.player.can_shoot:
         #     self.player.checkShootAbility()
@@ -298,26 +300,25 @@ class Game:
         for enemy in self.enemies:
             if enemy.getDirection() is not None:
 
-                enemySpeed = 3
+                enemySpeed = 2
                 bulletSpeed = 8
 
                 enemy_vec = self.player.getPosition() - enemy.getPosition()
 
-                timeBulletHit = enemy_vec.y / bulletSpeed
+                timeBulletHit = abs(enemy_vec.y / bulletSpeed)
+                # print(timeBulletHit)
 
-                enemyNewX = enemy_vec.x + enemy.getDirection() * enemySpeed * timeBulletHit
+                enemyNewX = enemy.getPosition().x + enemy.getDirection() * enemySpeed * timeBulletHit
 
-                screenWidth = self.bounding_box['width'] - PLAYER_WIDTH
-                if enemyNewX > screenWidth - PLAYER_WIDTH / 2:
-                    enemyNewX = screenWidth - (enemyNewX - screenWidth)
-                enemyNewX = abs(enemyNewX) + PLAYER_WIDTH/2
+                if enemyNewX < PLAYER_WIDTH / 2 or enemyNewX > self.gameDimensions[0] - (PLAYER_WIDTH / 2):
+                    return
 
                 if enemyNewX - PLAYER_WIDTH / 2 < self.player.getPosition().x < enemyNewX + PLAYER_WIDTH / 2:
                     self.shoot()
                     return
 
     def main(self):
-        self.getFrame()
+        self.gameDimensions = self.getFrame()
 
         FPS = 50
         # time_sleep = (FPS - time() % FPS) / 1000
