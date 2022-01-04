@@ -1,3 +1,4 @@
+from time import sleep, time
 from typing import Tuple, Any
 
 import numpy as np
@@ -76,16 +77,31 @@ class Vector2D:
         """Return the vector's components in polar coordinates."""
         return self.__abs__(), math.atan2(self.y, self.x)
 
+BULLET_WIDTH =  8
+PLAYER_WIDTH = 20 # TODO CHECK THESE
 
 class GameObject:
     def __init__(self, position: Vector2D):
         self.direction = 1
         self.position = position
 
+    def ai(self):
+        playerPos = self.player.getPosition()
+        distances = [x.getPosition() - playerPos for x in self.enemies]
+        # get bullets right above the pallete
+
     def updatePosition(self, new_pos: Vector2D) -> Vector2D:
-        self.direction = 1 if new_pos.x > self.position.x else -1
         self.position = new_pos
         return self.position
+
+    def setDirection(self, old_positions):
+        old_pos = min(old_positions, key=lambda x: abs(self.position - x))
+        print(old_pos.x, self.position.x, old_pos.x > self.position.x)
+        if old_pos.x != self.position.x:
+            self.direction = 1 if old_pos.x > self.position.x else -1
+
+    def getId(self) -> int:
+        return id(self)
 
     def getPosition(self) -> Vector2D:
         return self.position
@@ -169,7 +185,7 @@ class Game:
                         font_scale, color, 1, cv2.LINE_AA)
 
         for enemy in self.enemies:
-            cv2.putText(debug_img, 'enm', enemy.getPositionTuple(), font,
+            cv2.putText(debug_img, f'enm {enemy.getDirection()}', enemy.getPositionTuple(), font,
                         font_scale, color, 1, cv2.LINE_AA)
         cv2.imshow("debug image", debug_img)
         
@@ -185,18 +201,26 @@ class Game:
         self.detectedContours = [cv2.boundingRect(contour) for contour in contours]
 
     def updatePositions(self):
+
         enemies_positions = [ob for ob in self.detectedContours if 50 < ob[2] < 70]  # get big objects in x dir
         bullets_positions = [ob for ob in self.detectedContours if 6 < ob[2] < 15]  # get smol objects in x dir
 
+        enemies_positions_vec = [Vector2D(pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in enemies_positions]
+        bullets_positions_vec = [Vector2D(pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in bullets_positions]
+
         player_idx, player_contour = max(enumerate(enemies_positions), key=lambda x: x[1][1])
         enemies_positions.pop(player_idx)
+        prev_enemies_pos = [x.getPosition() for x in self.enemies]
         self.enemies = [Enemy(Vector2D(cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in enemies_positions]
         self.bullets = [Bullet(Vector2D(cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in bullets_positions]
 
-        # if len(player_contour) > 1:
-        #     print("DETECTED MORE THEN 1 PLAYER")
-        # print(player_contour)
-        self.player = Player(Vector2D(player_contour[0], player_contour[1]))
+        if prev_enemies_pos:
+            for enemy in self.enemies:
+                enemy.setDirection(prev_enemies_pos)
+
+
+        self.player.updatePosition(Vector2D(player_contour[0], player_contour[1]))
+        print(self.player.getId())
 
     def getFrame(self):
         frame_raw = self.sct.grab(self.bounding_box)
@@ -207,7 +231,9 @@ class Game:
     def main(self):
         self.getFrame()
 
+        FPS = 50
         while True:
+            sleep((FPS - time() % FPS)/1000)
             self.getFrame()
             self.detect_contours()
             # move_player(keyboard, 'shoot')
@@ -222,3 +248,11 @@ class Game:
 if __name__ == '__main__':
     game = Game()
     game.main()
+
+
+'''
+OG game has 50 fps
+bullet moves 8 px/frame
+player also movees 8px/frame
+enemies move randommly (all 2px or 3px) /frame=
+'''
