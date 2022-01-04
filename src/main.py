@@ -159,7 +159,8 @@ class Game:
         self.sct = mss()
         self.grabbedFrame = None
         self.detectedContours = None
-        self.gameDimensions = (None, None)
+        self.gameDimensions = (0, 0)
+        self.startTime = time()
 
         self.moving = None
 
@@ -167,20 +168,43 @@ class Game:
         self.enemies = []
         self.player = Player(Vector2D(0, 0))
 
-    def ai(self):
-        playerPos = self.player.getPosition()
-
-        distances = [x.getPosition() - playerPos for x in self.bullets]
-
+    def playerMovementAi(self):
+        player_pos = self.player.getPosition()
         # bullets directly above and close
+
+        bullets_around = [bul for bul in self.bullets if abs(bul.getPosition() - player_pos) < 200]
+
+        distances = [x.getPosition() - player_pos for x in self.bullets]
         bullets_above = list(
-            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH) and abs(dist.y) < 100, distances))
+            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH*1.5) and abs(dist.y) < 150, distances))
 
         weight = 0
-        for bullet_vec in bullets_above:
-            weight += abs(bullet_vec) * \
-                      (1 if bullet_vec.x < 0 else -1)
+        bullets_around_poss = [bul.getPosition() for bul in bullets_around]
 
+        # print(bullets_above_poss)
+        # for bullet_vec in bullets_around_poss:
+        #     weight += abs(bullet_vec - player_pos) ** 2
+
+        # if bullets_above_poss:
+        #     weight /= len(bullets_above_poss)
+
+        for bullet_vec in bullets_above:
+            weight += 1/abs(bullet_vec) * \
+                      (1 if bullet_vec.x < 0 else -1)
+        weight *= 1200
+
+        distance_from_center = self.gameDimensions[0] / 2 -player_pos.x
+
+
+        center_sign = 1 if distance_from_center >= 0 else -1
+        weight += abs(distance_from_center/500) ** 2 * center_sign
+
+        print(weight)
+
+        weight = weight
+        # print(weight)
+
+        # - left + right
         if weight > 0:
             self.moving = "right"
         elif weight == 0:
@@ -233,6 +257,8 @@ class Game:
             cv2.putText(debug_img, f'enm', enemy.getPositionTuple(), font,
                         font_scale, color, 1, cv2.LINE_AA)
 
+        cv2.putText(debug_img, f'time {(time() - self.startTime)}', (0,30), font,
+                    font_scale, (255,255,255), 1, cv2.LINE_AA)
         name = 'debug image'
         cv2.namedWindow(name)
         cv2.moveWindow(name, 400, 900)
@@ -297,7 +323,7 @@ class Game:
         self.grabbedFrame = self.grabbedFrame[y:h + y, x:w + x]
         cv2.rectangle(self.grabbedFrame, (0, 0), (80, 40), (0, 0, 0), -1)
         return w, h
-    
+
     def willBulletHitEnemy(self):
         # if not self.player.can_shoot:
         #     self.player.checkShootAbility()
@@ -337,7 +363,7 @@ class Game:
             self.showDebugImage()
 
             self.willBulletHitEnemy()
-            self.ai()
+            self.playerMovementAi()
             self.move_player()
 
             # will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
