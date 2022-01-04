@@ -193,6 +193,14 @@ class Game:
         self.enemies = []
         self.player = Player(Vector2D(0, 0))
 
+    def findUnavoidableBullets(self):
+        player_pos = self.player.getPosition()
+        bullets_horizontal = list(
+            filter(lambda dist: abs(dist.getPosition().x) < (PLAYER_WIDTH * 2.5) and abs(dist.getPosition().y) < 70,
+                   self.bullets))
+        if bullets_horizontal:
+            print(bullets_horizontal)
+
     def playerMovementAi(self):
         player_pos = self.player.getPosition()
         # bullets directly above and close
@@ -201,7 +209,7 @@ class Game:
 
         distances = [x.getPosition() - player_pos for x in self.bullets]
         bullets_above = list(
-            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH*1.5) and abs(dist.y) < 150, distances))
+            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH * 1.2) and abs(dist.y) < 200, distances))
 
         weight = 0
         bullets_around_poss = [bul.getPosition() for bul in bullets_around]
@@ -216,20 +224,21 @@ class Game:
         for bullet_vec in bullets_above:
             weight += 1/abs(bullet_vec) * \
                       (1 if bullet_vec.x < 0 else -1)
-        weight *= 1200
+        weight *= 1400
 
-        distance_from_center = self.gameDimensions[0] / 2 -player_pos.x
+        distance_from_center = self.gameDimensions[0] / 2 - player_pos.x
 
 
         center_sign = 1 if distance_from_center >= 0 else -1
-        weight += abs(distance_from_center/500) ** 2 * center_sign
+        weight += abs(distance_from_center / 800) ** 2 * center_sign
 
-        print(weight)
+        # print(weight)
 
         weight = weight
         # print(weight)
 
         # - left + right
+        self.findUnavoidableBullets()
         if weight > 0:
             self.player.setMoving("right")
         elif weight == 0:
