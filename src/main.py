@@ -176,7 +176,7 @@ class Game:
     def detect_contours(self):
         gray = cv2.cvtColor(self.grabbedFrame, cv2.COLOR_BGR2GRAY)
 
-        ret, thresh1 = cv2.threshold(gray, 80, 255, cv2.THRESH_BINARY)
+        ret, thresh1 = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
 
         # Find the contours
         contours, hierarchy = cv2.findContours(
@@ -200,8 +200,8 @@ class Game:
 
     def getFrame(self):
         frame_raw = self.sct.grab(self.bounding_box)
-        # self.grabbedFrame = np.array(frame_raw)
-        self.grabbedFrame = cv2.imread("sample.png")
+        self.grabbedFrame = np.array(frame_raw)
+        # self.grabbedFrame = cv2.imread("sample.png")
         cv2.rectangle(self.grabbedFrame, (0, 0), (80, 50), (0,0,0), -1)
 
     def main(self):
