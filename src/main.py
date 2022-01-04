@@ -80,7 +80,7 @@ class Vector2D:
 
 
 BULLET_WIDTH = 8
-PLAYER_WIDTH = 60 
+PLAYER_WIDTH = 60
 
 
 class GameObject:
@@ -141,7 +141,7 @@ class Player(GameObject):
 class Game:
     keyboard = None
     sct = None
-    bounding_box = {'top': 8, 'left': 8, 'width': 960, 'height': 540}
+    bounding_box = {'top': 0, 'left': 0, 'width': 1920, 'height': 1080}
 
     def __init__(self):
         self.keyboard = Controller()
@@ -199,11 +199,11 @@ class Game:
         elif self.moving == 'right':
             self.keyboard.press(Key.right)
             self.keyboard.release(Key.left)
-            
+
     def shoot(self):
         self.keyboard.press(Key.space)
         self.keyboard.release(Key.space)
-        
+
     def showDebugImage(self):
         debug_img = self.grabbedFrame
         for cnt in self.detectedContours:
@@ -276,28 +276,39 @@ class Game:
     def getFrame(self):
         frame_raw = self.sct.grab(self.bounding_box)
         self.grabbedFrame = np.array(frame_raw)
-        # self.grabbedFrame = cv2.imread("sample.png")
-        # remove score and lives text
+        temp_frame = self.grabbedFrame.copy()
+
+        gray = cv2.cvtColor(temp_frame, cv2.COLOR_BGR2GRAY)
+
+        ret, thresh1 = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
+        thresh1 = (255 - thresh1)
+        contours, hierarchy = cv2.findContours(
+            thresh1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        c = max(contours, key=cv2.contourArea)
+        cnt = cv2.boundingRect(c)
+        (x, y, w, h) = cnt
+        self.grabbedFrame = self.grabbedFrame[y:h+y, x:w+x]
         cv2.rectangle(self.grabbedFrame, (0, 0), (80, 40), (0, 0, 0), -1)
-    
+
     def willBulletHitEnemy(self):
         for enemy in self.enemies:
             if enemy.getDirection() is not None:
-            
+
                 enemySpeed  = 3
                 bulletSpeed = 8
-                
+
                 enemy_vec = self.player.getPosition() - enemy.getPosition()
-                
+
                 timeBulletHit = enemy_vec.y / bulletSpeed
-                
+
                 enemyNewX = enemy_vec.x + enemy.getDirection() * enemySpeed * timeBulletHit
-                
+
                 screenWidth = self.bounding_box['width']
                 if enemyNewX > screenWidth-PLAYER_WIDTH/2:
                     enemyNewX - screenWidth
                 enemyNewX = abs(enemyNewX)
-                
+
 
                 if enemyNewX-PLAYER_WIDTH/2 < self.player.getPosition().x < enemyNewX+PLAYER_WIDTH/2:
                     self.shoot()
@@ -316,7 +327,7 @@ class Game:
             self.ai()
             self.move_player()
             self.willBulletHitEnemy()
-     
+
             if (cv2.waitKey(1) & 0xFF) == ord('q'):
                 cv2.destroyAllWindows()
                 break
