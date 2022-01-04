@@ -265,6 +265,9 @@ class Game:
             cv2.putText(debug_img, f'enm', enemy.getPositionTuple(), font,
                         font_scale, color, 1, cv2.LINE_AA)
 
+        cv2.putText(debug_img, f't: {time() - self.startTime}', (0,50), font,
+                    font_scale, (255, 255, 255), 1, cv2.LINE_AA)
+
         name = 'debug image'
         cv2.namedWindow(name)
         cv2.moveWindow(name, 400, 900)
@@ -307,9 +310,18 @@ class Game:
             for enemy in self.enemies:
                 enemy.setDirection(prev_enemies_obj)
 
+        player_bullet_indexes = []
         if prev_bullets_obj:
-            for bullet in self.bullets:
+            for index, bullet in enumerate(self.bullets):
                 bullet.setDirection(prev_bullets_obj)
+                bul_pos = bullet.getPosition()
+                pixel = cv2.split(self.grabbedFrame[int(bul_pos.y), int(bul_pos.x)])[0]
+                if pixel[0] == 255 and pixel[1] == 255 and pixel[2] == 255:
+                    player_bullet_indexes.append(index)
+
+        for index_of_index, index in enumerate(player_bullet_indexes):
+            self.bullets.pop(index - index_of_index)
+            pass
 
     def getFrame(self):
         frame_raw = self.sct.grab(self.bounding_box)
