@@ -7,7 +7,7 @@ from mss import mss
 from PIL import Image
 from pynput.keyboard import Key, Controller, Listener
 import math
-
+import copy
 
 class Vector2D:
     """A two-dimensional vector with Cartesian coordinates."""
@@ -82,7 +82,7 @@ PLAYER_WIDTH = 20 # TODO CHECK THESE
 
 class GameObject:
     def __init__(self, position: Vector2D):
-        self.direction = 1
+        self.direction = None
         self.position = position
 
     def ai(self):
@@ -94,17 +94,23 @@ class GameObject:
         self.position = new_pos
         return self.position
 
-    def setDirection(self, old_positions):
-        old_pos = min(old_positions, key=lambda x: abs(self.position - x))
-        print(old_pos.x, self.position.x, old_pos.x > self.position.x)
+    def setDirection(self, old_objects):
+        old_obj = min(old_objects, key=lambda x: abs(self.position - x.getPosition()))
+        old_pos = old_obj.getPosition()
+
         if old_pos.x != self.position.x:
-            self.direction = 1 if old_pos.x > self.position.x else -1
+            self.direction = 1 if old_pos.x < self.position.x else -1
+        else:
+            self.direction = old_obj.getDirection()
 
     def getId(self) -> int:
         return id(self)
 
     def getPosition(self) -> Vector2D:
         return self.position
+
+    def getDirection(self) -> Vector2D:
+        return self.direction
 
     def getPositionTuple(self) -> tuple[Any, Any]:
         return int(self.position.x), int(self.position.y)
@@ -210,17 +216,17 @@ class Game:
 
         player_idx, player_contour = max(enumerate(enemies_positions), key=lambda x: x[1][1])
         enemies_positions.pop(player_idx)
-        prev_enemies_pos = [x.getPosition() for x in self.enemies]
+
+        prev_enemies_obj = copy.deepcopy(self.enemies)
         self.enemies = [Enemy(Vector2D(cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in enemies_positions]
         self.bullets = [Bullet(Vector2D(cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in bullets_positions]
 
-        if prev_enemies_pos:
+        if prev_enemies_obj:
             for enemy in self.enemies:
-                enemy.setDirection(prev_enemies_pos)
+                enemy.setDirection(prev_enemies_obj)
 
 
         self.player.updatePosition(Vector2D(player_contour[0], player_contour[1]))
-        print(self.player.getId())
 
     def getFrame(self):
         frame_raw = self.sct.grab(self.bounding_box)
