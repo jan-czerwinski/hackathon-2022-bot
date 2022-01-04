@@ -139,29 +139,54 @@ class Bullet(GameObject):
 
 
 class Player(GameObject):
+    keyboard = None
     def __init__(self, position: Vector2D):
         super().__init__(position)
-        # self.can_shoot = True
-        # self.last_shoot_time = time()
+        self.keyboard = Controller()
 
+        self.last_shot_time = time()
+        self.moving = None
+        
+    def setMoving(self, moving):
+        self.moving = moving
+
+
+    def shoot(self):
+        if time() - self.last_shot_time > 1.1:
+            self.last_shot_time = time()
+            self.keyboard.press(Key.space)
+            self.keyboard.release(Key.space)
+            
+    def move_player(self):
+        if self.moving is None:
+            self.keyboard.release(Key.left)
+            self.keyboard.release(Key.right)
+            return
+
+        if self.moving == 'left':
+            self.keyboard.press(Key.left)
+            self.keyboard.release(Key.right)
+
+        elif self.moving == 'right':
+            self.keyboard.press(Key.right)
+            self.keyboard.release(Key.left)
+        
+        
     # def checkShootAbility(self):
     # if time() - self.last_shoot_time > 1:
     # self.can_shoot = True
 
 
 class Game:
-    keyboard = None
     sct = None
     bounding_box = {'top': 0, 'left': 0, 'width': 1920, 'height': 1080}
 
     def __init__(self):
-        self.keyboard = Controller()
         self.sct = mss()
         self.grabbedFrame = None
         self.detectedContours = None
         self.gameDimensions = (None, None)
 
-        self.moving = None
 
         self.bullets = []
         self.enemies = []
@@ -182,35 +207,19 @@ class Game:
                       (1 if bullet_vec.x < 0 else -1)
 
         if weight > 0:
-            self.moving = "right"
+            self.player.setMoving("right")
         elif weight == 0:
-            self.moving = None
+            self.player.setMoving("None")
         else:
-            self.moving = "left"
+            self.player.setMoving("left")
 
         # print(bullets_above)
 
-    def move_player(self):
-        if self.moving is None:
-            self.keyboard.release(Key.left)
-            self.keyboard.release(Key.right)
-            return
 
-        if self.moving == 'left':
-            self.keyboard.press(Key.left)
-            self.keyboard.release(Key.right)
 
-        elif self.moving == 'right':
-            self.keyboard.press(Key.right)
-            self.keyboard.release(Key.left)
 
-    def shoot(self):
-        self.keyboard.press(Key.space)
-        self.keyboard.release(Key.space)
-        # self.player.can_shoot = False
-        # self.player.last_shoot_time = time()
 
-    def showDebugImage(self):
+    def showDebugImage(self, enemyX):
         debug_img = self.grabbedFrame
         for cnt in self.detectedContours:
             (x, y, w, h) = cnt
@@ -232,7 +241,7 @@ class Game:
         for enemy in self.enemies:
             cv2.putText(debug_img, f'enm', enemy.getPositionTuple(), font,
                         font_scale, color, 1, cv2.LINE_AA)
-
+        
         name = 'debug image'
         cv2.namedWindow(name)
         cv2.moveWindow(name, 400, 900)
@@ -299,10 +308,6 @@ class Game:
         return w, h
     
     def willBulletHitEnemy(self):
-        # if not self.player.can_shoot:
-        #     self.player.checkShootAbility()
-        #     return 
-
         for enemy in self.enemies:
             if enemy.getDirection() is not None:
 
@@ -317,11 +322,13 @@ class Game:
                 enemyNewX = enemy.getPosition().x + enemy.getDirection() * enemySpeed * timeBulletHit
 
                 if enemyNewX < PLAYER_WIDTH / 2 or enemyNewX > self.gameDimensions[0] - (PLAYER_WIDTH / 2):
-                    return
+                    return 0
 
-                if enemyNewX - PLAYER_WIDTH / 2 < self.player.getPosition().x < enemyNewX + PLAYER_WIDTH / 2:
-                    self.shoot()
-                    return
+                if enemyNewX - PLAYER_WIDTH / 4 < self.player.getPosition().x < enemyNewX + PLAYER_WIDTH / 4:
+                    self.player.shoot()
+                    print(enemyNewX)
+                    return enemyNewX
+        return 0 
 
     def main(self):
         self.gameDimensions = self.getFrame()
@@ -334,11 +341,12 @@ class Game:
             self.getFrame()
             self.detect_contours()
             self.updatePositions()
+            self.willBulletHitEnemy()
             self.showDebugImage()
 
-            self.willBulletHitEnemy()
-            self.ai()
-            self.move_player()
+            # self.ai()
+            
+            self.player.move()
 
             # will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
             # sleep(will_sleep)
