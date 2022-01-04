@@ -311,7 +311,8 @@
         this.index = Game.enemyIndex;
         Game.enemies[Game.enemyIndex] = this;
         Game.enemyIndex++;
-        this.speed = Game.random(2, 3);
+        // this.speed = Game.random(2, 3);
+        this.speed = 3;
         this.shootingSpeed = Game.random(30, 80);
         this.movingLeft = Math.random() < 0.5 ? true : false;
         this.color = "hsl("+ Game.random(0, 360) +", 60%, 50%)";
