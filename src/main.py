@@ -303,7 +303,7 @@ class Game:
         for enemy in self.enemies:
             if enemy.getDirection() is not None:
 
-                enemySpeed = 2
+                enemySpeed = 3
                 bulletSpeed = 8
 
                 enemy_vec = self.player.getPosition() - enemy.getPosition()
@@ -312,10 +312,10 @@ class Game:
 
                 enemyNewX = enemy_vec.x + enemy.getDirection() * enemySpeed * timeBulletHit
 
-                screenWidth = self.bounding_box['width']
+                screenWidth = self.bounding_box['width'] - PLAYER_WIDTH
                 if enemyNewX > screenWidth - PLAYER_WIDTH / 2:
                     enemyNewX = screenWidth - (enemyNewX-screenWidth)
-                enemyNewX = abs(enemyNewX)
+                enemyNewX = abs(enemyNewX) + PLAYER_WIDTH/2
 
                 if enemyNewX - PLAYER_WIDTH / 2 < self.player.getPosition().x < enemyNewX + PLAYER_WIDTH / 2:
                     self.shoot()
@@ -325,9 +325,9 @@ class Game:
         self.getFrame()
 
         FPS = 50
-        time_sleep = (FPS - time() % FPS) / 1000
+        # time_sleep = (FPS - time() % FPS) / 1000
         while True:
-            start_time = time()
+            # start_time = time()
 
             self.getFrame()
             self.detect_contours()
@@ -340,8 +340,8 @@ class Game:
 
             self.move_player()
 
-            will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
-            sleep(will_sleep)
+            # will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
+            # sleep(will_sleep)
             if (cv2.waitKey(1) & 0xFF) == ord('q'):
                 cv2.destroyAllWindows()
                 break
