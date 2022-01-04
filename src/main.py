@@ -157,13 +157,13 @@ class Game:
 
     def ai(self):
         playerPos = self.player.getPosition()
-        
-        distances = [x.getPosition() - playerPos for x in self.bullets] 
-        
-        
-        #bullets directly above and close 
+
+        distances = [x.getPosition() - playerPos for x in self.bullets]
+
+
+        #bullets directly above and close
         bullets_above = list(filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH/2 +20) and abs(dist.y) < 100, distances))
-        
+
         weight = 0
         for bullet_vec in bullets_above:
             weight += abs(bullet_vec) * \
@@ -176,17 +176,17 @@ class Game:
             self.moving = None
         else:
             self.moving = "left"
-            
+
         print(self.moving)
-            
+
         # print(bullets_above)
-        
-    
-        
-        
 
 
-    def move_player(self):            
+
+
+
+
+    def move_player(self):
         if self.moving is None:
             self.keyboard.release(Key.left)
             self.keyboard.release(Key.right)
@@ -288,7 +288,7 @@ class Game:
         c = max(contours, key=cv2.contourArea)
         cnt = cv2.boundingRect(c)
         (x, y, w, h) = cnt
-        self.grabbedFrame = self.grabbedFrame[y:h+y, x:w+x]
+        self.grabbedFrame = self.grabbedFrame[y:h + y, x:w + x]
         cv2.rectangle(self.grabbedFrame, (0, 0), (80, 40), (0, 0, 0), -1)
 
     def willBulletHitEnemy(self):
