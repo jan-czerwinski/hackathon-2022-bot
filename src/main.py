@@ -85,7 +85,7 @@ PLAYER_WIDTH = 60
 
 class GameObject:
     def __init__(self, position: Vector2D):
-        self.direction = None
+        self.direction = 0
         self.position = position
 
     def updatePosition(self, new_pos: Vector2D) -> Vector2D:
@@ -97,9 +97,6 @@ class GameObject:
 
     def getPosition(self) -> Vector2D:
         return self.position
-
-    def getDirection(self) -> Vector2D:
-        return self.direction
 
     def getPositionTuple(self) -> tuple[Any, Any]:
         return int(self.position.x), int(self.position.y)
@@ -114,7 +111,6 @@ class GameObject:
 class Enemy(GameObject):
     def __init__(self, position: Vector2D):
         super().__init__(position)
-        self.willBeHit = False
 
     def setDirection(self, old_objects):
         old_obj = min(old_objects, key=lambda x: abs(
@@ -130,6 +126,16 @@ class Enemy(GameObject):
 class Bullet(GameObject):
     def __init__(self, position: Vector2D):
         super().__init__(position)
+
+    def setDirection(self, old_objects):
+        old_obj = min(old_objects, key=lambda x: abs(
+            self.position - x.getPosition()))
+        old_pos = old_obj.getPosition()
+
+        if old_pos.y != self.position.y:
+            self.direction = 1 if old_pos.y < self.position.y else -1
+        else:
+            self.direction = old_obj.getDirection()
 
 
 class Player(GameObject):
@@ -220,7 +226,7 @@ class Game:
                     font_scale, color, 1, cv2.LINE_AA)
 
         for bullet in self.bullets:
-            cv2.putText(debug_img, 'bul', bullet.getPositionTuple(), font,
+            cv2.putText(debug_img, f'bul {bullet.getDirection()}', bullet.getPositionTuple(), font,
                         font_scale, color, 1, cv2.LINE_AA)
 
         for enemy in self.enemies:
@@ -249,13 +255,8 @@ class Game:
         # get big objects in x dir
         enemies_positions = [ob for ob in self.detectedContours if 50 < ob[2]]
         # get smol objects in x dir
-        bullets_positions = [
-            ob for ob in self.detectedContours if 6 < ob[2] < 15]
+        bullets_positions = [ob for ob in self.detectedContours if 6 < ob[2] < 15]
 
-        enemies_positions_vec = [Vector2D(
-            pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in enemies_positions]
-        bullets_positions_vec = [Vector2D(
-            pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in bullets_positions]
         if enemies_positions:
             player_idx, player_contour = max(
                 enumerate(enemies_positions), key=lambda x: x[1][1])
@@ -264,6 +265,7 @@ class Game:
                 Vector2D(player_contour[0] + player_contour[2] / 2, player_contour[1] + player_contour[3] / 2))
 
         prev_enemies_obj = copy.deepcopy(self.enemies)
+        prev_bullets_obj = copy.deepcopy(self.bullets)
         self.enemies = [Enemy(Vector2D(
             cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in enemies_positions]
         self.bullets = [Bullet(Vector2D(
@@ -272,6 +274,10 @@ class Game:
         if prev_enemies_obj:
             for enemy in self.enemies:
                 enemy.setDirection(prev_enemies_obj)
+
+        if prev_bullets_obj:
+            for bullet in self.bullets:
+                bullet.setDirection(prev_bullets_obj)
 
     def getFrame(self):
         frame_raw = self.sct.grab(self.bounding_box)
@@ -330,10 +336,8 @@ class Game:
             self.updatePositions()
             self.showDebugImage()
 
-            self.ai()
-            # self.move_player()
             self.willBulletHitEnemy()
-
+            self.ai()
             self.move_player()
 
             # will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
