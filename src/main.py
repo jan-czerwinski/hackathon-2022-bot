@@ -32,7 +32,7 @@ class Vector2D:
                 'Can only take dot product of two Vector2D objects')
         return self.x * other.x + self.y * other.y
 
-    # Alias the __matmul__ method to dot so we can use a @ b as well as a.dot(b).
+    # Alias the __matmul__ method to dot so  can use a @ b as well as a.dot(b).
     __matmul__ = dot
 
     def __sub__(self, other):
@@ -80,7 +80,7 @@ class Vector2D:
 
 
 BULLET_WIDTH = 8
-PLAYER_WIDTH = 20  # TODO CHECK THESE
+PLAYER_WIDTH = 60 
 
 
 class GameObject:
@@ -88,17 +88,13 @@ class GameObject:
         self.direction = None
         self.position = position
 
-    def ai(self):
-        playerPos = self.player.getPosition()
-        distances = [x.getPosition() - playerPos for x in self.enemies]
-        # get bullets right above the pallete
-
     def updatePosition(self, new_pos: Vector2D) -> Vector2D:
         self.position = new_pos
         return self.position
 
     def setDirection(self, old_objects):
-        old_obj = min(old_objects, key=lambda x: abs(self.position - x.getPosition()))
+        old_obj = min(old_objects, key=lambda x: abs(
+            self.position - x.getPosition()))
         old_pos = old_obj.getPosition()
 
         if old_pos.x != self.position.x:
@@ -153,26 +149,59 @@ class Game:
         self.grabbedFrame = None
         self.detectedContours = None
 
+        self.moving = None
+
         self.bullets = []
         self.enemies = []
         self.player = Player(Vector2D(0, 0))
 
-    def move_player(self, move=None):
-        if move is None:
+    def ai(self):
+        playerPos = self.player.getPosition()
+        
+        distances = [x.getPosition() - playerPos for x in self.bullets] 
+        
+        
+        #bullets directly above and close 
+        bullets_above = list(filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH/2 -2) and abs(dist.y) < 100, distances))
+        
+        weight = 0
+        for bullet_vec in bullets_above:
+            weight += 1/(abs(bullet_vec)-300) * \
+                (1 if bullet_vec.x < 0 else -1)
+
+
+        if weight > 0:
+            self.moving = "right"
+        else:
+            self.moving = "left"
+            
+        print(self.moving)
+            
+        # print(bullets_above)
+        
+    
+        
+        
+
+
+    def move_player(self):            
+        if self.moving is None:
+            self.keyboard.release(Key.left)
+            self.keyboard.release(Key.right)
             return
 
-        if move == 'left':
+        if self.moving == 'left':
             self.keyboard.press(Key.left)
-            self.keyboard.release(Key.left)
-
-        elif move == 'right':
-            self.keyboard.press(Key.right)
             self.keyboard.release(Key.right)
 
-        elif move == 'shoot':
-            self.keyboard.press(Key.space)
-            self.keyboard.release(Key.space)
-
+        elif self.moving == 'right':
+            self.keyboard.press(Key.right)
+            self.keyboard.release(Key.left)
+            
+    def shoot(self):
+        self.keyboard.press(Key.space)
+        self.keyboard.release(Key.space)
+        
     def showDebugImage(self):
         debug_img = self.grabbedFrame
         for cnt in self.detectedContours:
@@ -195,7 +224,11 @@ class Game:
         for enemy in self.enemies:
             cv2.putText(debug_img, f'enm {enemy.getDirection()}', enemy.getPositionTuple(), font,
                         font_scale, color, 1, cv2.LINE_AA)
-        cv2.imshow("debug image", debug_img)
+
+        name = 'debug image'
+        cv2.namedWindow(name)
+        cv2.moveWindow(name, 400, 900)
+        cv2.imshow(name, debug_img)
 
     def detect_contours(self):
         gray = cv2.cvtColor(self.grabbedFrame, cv2.COLOR_BGR2GRAY)
@@ -206,23 +239,33 @@ class Game:
         contours, hierarchy = cv2.findContours(
             thresh1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        self.detectedContours = [cv2.boundingRect(contour) for contour in contours]
+        self.detectedContours = [cv2.boundingRect(
+            contour) for contour in contours]
 
     def updatePositions(self):
 
-        enemies_positions = [ob for ob in self.detectedContours if 50 < ob[2]]  # get big objects in x dir
-        bullets_positions = [ob for ob in self.detectedContours if 6 < ob[2] < 15]  # get smol objects in x dir
+        # get big objects in x dir
+        enemies_positions = [ob for ob in self.detectedContours if 50 < ob[2]]
+        # get smol objects in x dir
+        bullets_positions = [
+            ob for ob in self.detectedContours if 6 < ob[2] < 15]
 
-        enemies_positions_vec = [Vector2D(pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in enemies_positions]
-        bullets_positions_vec = [Vector2D(pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in bullets_positions]
+        enemies_positions_vec = [Vector2D(
+            pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in enemies_positions]
+        bullets_positions_vec = [Vector2D(
+            pos[0] + pos[2] / 2, pos[1] + pos[3] / 2) for pos in bullets_positions]
         if enemies_positions:
-            player_idx, player_contour = max(enumerate(enemies_positions), key=lambda x: x[1][1])
+            player_idx, player_contour = max(
+                enumerate(enemies_positions), key=lambda x: x[1][1])
             enemies_positions.pop(player_idx)
-            self.player.updatePosition(Vector2D(player_contour[0], player_contour[1]))
+            self.player.updatePosition(
+                Vector2D(player_contour[0], player_contour[1]))
 
         prev_enemies_obj = copy.deepcopy(self.enemies)
-        self.enemies = [Enemy(Vector2D(cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in enemies_positions]
-        self.bullets = [Bullet(Vector2D(cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in bullets_positions]
+        self.enemies = [Enemy(Vector2D(
+            cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in enemies_positions]
+        self.bullets = [Bullet(Vector2D(
+            cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in bullets_positions]
 
         if prev_enemies_obj:
             for enemy in self.enemies:
@@ -243,9 +286,11 @@ class Game:
             sleep((FPS - time() % FPS) / 1000)
             self.getFrame()
             self.detect_contours()
-            # move_player(keyboard, 'shoot')
             self.updatePositions()
             self.showDebugImage()
+
+            self.ai()
+            self.move_player()
 
             if (cv2.waitKey(1) & 0xFF) == ord('q'):
                 cv2.destroyAllWindows()
