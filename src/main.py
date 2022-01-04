@@ -4,32 +4,6 @@ from mss import mss
 from PIL import Image
 from pynput.keyboard import Key, Controller, Listener
 import math
-def move_player(keyboard, move=None):
-    if move is None:
-        return
-
-    if move == 'left':
-        keyboard.press(Key.left)
-        keyboard.release(Key.left)
-
-    elif move == 'right':
-        keyboard.press(Key.right)
-        keyboard.release(Key.right)
-
-    elif move == 'shoot':
-        keyboard.press(Key.space)
-        keyboard.release(Key.space)
-
-
-def start_on_enter_press(key):
-    if key == Key.enter:
-        print("ENTER ENTER")
-        return False
-    # # Collect events until released
-    # with Listener(
-    #         on_press=start_on_enter_press,
-    #         on_release=None) as listener:
-    #     listener.join()
 
 
 class Vector2D:
@@ -50,7 +24,8 @@ class Vector2D:
         """The scalar (dot) product of self and other. Both must be vectors."""
 
         if not isinstance(other, Vector2D):
-            raise TypeError('Can only take dot product of two Vector2D objects')
+            raise TypeError(
+                'Can only take dot product of two Vector2D objects')
         return self.x * other.x + self.y * other.y
 
     # Alias the __matmul__ method to dot so we can use a @ b as well as a.dot(b).
@@ -115,6 +90,8 @@ class GameObject:
 
     def getDirection(self):
         return self.direction
+    
+    
 
 
 class Enemy(GameObject):
@@ -133,6 +110,120 @@ class Player(GameObject):
 
     # TODO move player
 
+class Game:
+    keyboard = None
+    sct = None
+    def __init__(self):
+        self.keyboard = Controller()
+        self.sct = mss()
+        
+        self.bullets = []
+        self.enemies = []
+        self.player = Player(Vector2D(0, 0))
+
+    def move_player(self, move=None):
+        if move is None:
+            return
+
+        if move == 'left':
+            self.keyboard.press(Key.left)
+            self.keyboard.release(Key.left)
+
+        elif move == 'right':
+            self.keyboard.press(Key.right)
+            self.keyboard.release(Key.right)
+
+        elif move == 'shoot':
+            self.keyboard.press(Key.space)
+            self.keyboard.release(Key.space)
+
+
+    def debugImage(img, contours):
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            cv2.rectangle(img,
+                        (x, y), (x + w, y + h),
+                        (0, 255, 0),
+                        2)
+
+    def detect_rectangles(self, img):
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        ret, thresh1 = cv2.threshold(gray, 80, 255, cv2.THRESH_BINARY)
+
+        # Find the contours
+        contours, hierarchy = cv2.findContours(
+            thresh1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        # for cnt in contours:
+        #     x, y, w, h = cv2.boundingRect(cnt)
+        #     cv2.rectangle(img,
+        #                   (x, y), (x + w, y + h),
+        #                   (0, 255, 0),
+        #                   2)
+
+        return [cv2.boundingRect(contour) for contour in contours], img
+    
+    def labelObjects(self, contours):
+        self.enemiesPositions = [ob for ob in contours if 50 <
+                        ob[2] < 70]  # get big objects in x dir
+        bulletsPositions = [ob for ob in contours if 4 <
+                        ob[2] < 8]  # get smol objects in x dir
+
+        playerPosition = max(contours, key=lambda x: x[1])
+
+        return playerPosition, enemiesPositions, bulletsPositions
+
+    def updateEnemiesPositions(self, contours):
+        return [Enemy(Vector2D(cont[0] + cont[2]/2, cont[1] + cont[3]/2)) for cont in contours]
+
+
+    def updateBulletsPositions(self, contours):
+        return [Bullet(Vector2D(cont[0] + cont[2]/2, cont[1] + cont[3]/2)) for cont in contours]
+
+
+    def updatePlayerPosition(self, contour):
+        if len(contour) > 1:
+            print("DETECTED MORE THEN 1 PLAYER")
+        return Player(Vector2D(contour[0], contour[1]))
+
+
+    def updatePositions(self, contours):
+        player_position, enemies_positions, bullets_positions = labelObjects(
+            contours)
+        print(player_position, bullets_positions, enemies_positions)
+
+        enemies = updateEnemiesPositions(enemies_positions)
+        bullets = updateBulletsPositions(bullets_positions)
+        player = updatePlayerPosition(player_position)
+        return player, enemies, bullets
+
+    def main(self):
+
+        bounding_box = {'top': 8, 'left': 8, 'width': 960, 'height': 540}
+
+        frame_raw = sct.grab(bounding_box)
+        frame = np.array(frame_raw)
+
+        while True:
+            frame_raw = sct.grab(bounding_box)
+            frame = np.array(frame_raw)
+            detect_rectangles(frame)
+
+            # move_player(keyboard, 'shoot')
+            frame = cv2.imread("sample.png")
+            contours, img = detect_rectangles(frame)
+            cv2.imshow('debug image', img)
+            updatePositions(contours)
+
+            if (cv2.waitKey(1) & 0xFF) == ord('q'):
+                cv2.destroyAllWindows()
+                break
+
+
+
+
+
 
 # [(283, 537, 8, 3), (741, 536, 8, 4), (362, 520, 60, 20), (768, 479, 8, 21), (665, 429, 8, 20),
 # (622, 405, 8, 21), (389, 337, 8, 20), (213, 334, 8, 21), (807, 252, 60, 19), (153, 241, 60, 21),
@@ -141,89 +232,11 @@ class Player(GameObject):
 # (39, 32, 4, 3), (31, 32, 4, 3), (51, 17, 3, 3), (51, 11, 3, 3), (19, 11, 31, 10), (43, 16, 5, 3), (44, 12, 3, 3),
 # (28, 12, 6, 7), (20, 12, 8, 7), (59, 8, 9, 13), (60, 10, 6, 9), (8, 7, 10, 14), (960, 0, 1, 540)]
 
-def debugImage(img, contours, player, enemies, bullets):
-    for cnt in contours:
-        x, y, w, h = cv2.boundingRect(cnt)
-        cv2.rectangle(img,
-                      (x, y), (x + w, y + h),
-                      (0, 255, 0),
-                      2)
 
 
-def labelObjects(contours):
-    enemiesPositions = [ob for ob in contours if 50 < ob[2] < 70]  # get big objects in x dir
-    bulletsPositions = [ob for ob in contours if 4 < ob[2] < 8]  # get smol objects in x dir
-
-    playerPosition = max(contours, key=lambda x: x[1])
-
-    return playerPosition, enemiesPositions, bulletsPositions
 
 
-def updateEnemiesPositions(contours):
-    pass
 
-
-def updateBulletsPositions(contours):
-    pass
-
-
-def updatePlayerPosition(contours):
-    pass
-
-
-def updatePositions(contours):
-    playerPosition, enemiesPositions, bulletsPositions = labelObjects(contours)
-    print(playerPosition, bulletsPositions, enemiesPositions)
-    updateEnemiesPositions(contours)
-    updateBulletsPositions(contours)
-    updatePlayerPosition(contours)
-
-
-def main():
-    bullets = []
-    enemies = []
-    player = Player(Vector2D(0, 0))
-
-    bounding_box = {'top': 8, 'left': 8, 'width': 960, 'height': 540}
-    keyboard = Controller()
-
-    sct = mss()
-
-    frame_raw = sct.grab(bounding_box)
-    frame = np.array(frame_raw)
-
-    while True:
-        frame_raw = sct.grab(bounding_box)
-        frame = np.array(frame_raw)
-        detect_rectangles(frame)
-
-        # move_player(keyboard, 'shoot')
-        frame = cv2.imread("sample.png")
-        contours, img = detect_rectangles(frame)
-        cv2.imshow('debug image', img)
-        updatePositions(contours)
-
-        if (cv2.waitKey(1) & 0xFF) == ord('q'):
-            cv2.destroyAllWindows()
-            break
-
-
-def detect_rectangles(img):
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    ret, thresh1 = cv2.threshold(gray, 80, 255, cv2.THRESH_BINARY)
-
-    # Find the contours
-    contours, hierarchy = cv2.findContours(thresh1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-    # for cnt in contours:
-    #     x, y, w, h = cv2.boundingRect(cnt)
-    #     cv2.rectangle(img,
-    #                   (x, y), (x + w, y + h),
-    #                   (0, 255, 0),
-    #                   2)
-
-    return [cv2.boundingRect(contour) for contour in contours], img
 
 
 if __name__ == '__main__':
