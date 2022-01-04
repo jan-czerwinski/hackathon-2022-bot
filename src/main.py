@@ -265,7 +265,7 @@ class Game:
             cv2.putText(debug_img, f'enm', enemy.getPositionTuple(), font,
                         font_scale, color, 1, cv2.LINE_AA)
 
-        cv2.putText(debug_img, f't: {time() - self.startTime}', (0, 50), font,
+        cv2.putText(debug_img, f't: {int(time() - self.startTime)}', (0, 50), font,
                     font_scale, (255, 255, 255), 1, cv2.LINE_AA)
 
         name = 'debug image'
@@ -359,7 +359,7 @@ class Game:
                 if enemyNewX < PLAYER_WIDTH / 2 or enemyNewX > self.gameDimensions[0] - (PLAYER_WIDTH / 2):
                     return
 
-                if enemyNewX - PLAYER_WIDTH / 4 < self.player.getPosition().x < enemyNewX + PLAYER_WIDTH / 4:
+                if enemyNewX - 10 < self.player.getPosition().x < enemyNewX + 10:
                     self.player.shoot()
                     return
 
@@ -368,6 +368,7 @@ class Game:
             self.playing = not self.playing
             self.player.setMoving(None)
             self.player.move()
+            self.startTime = time()
 
     def main(self):
         self.gameDimensions = self.getFrame()
@@ -377,6 +378,7 @@ class Game:
             on_release=None)
 
         listener.start()
+        
         while True:
             self.getFrame()
             self.detect_contours()
