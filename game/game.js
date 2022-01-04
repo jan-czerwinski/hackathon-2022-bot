@@ -21,7 +21,7 @@
             this.enemyIndex = 0;
             this.particleIndex = 0;
             this.maxParticles = 10;
-            this.maxEnemies = 6;
+            this.maxEnemies = 1;
             this.enemiesAlive = 0;
             this.currentFrame = 0;
             this.maxLives = 3;
@@ -311,8 +311,7 @@
         this.index = Game.enemyIndex;
         Game.enemies[Game.enemyIndex] = this;
         Game.enemyIndex++;
-        // this.speed = Game.random(2, 3);
-        this.speed = 3;
+        this.speed = Game.random(2, 3);
         this.shootingSpeed = Game.random(30, 80);
         this.movingLeft = Math.random() < 0.5 ? true : false;
         this.color = "hsl("+ Game.random(0, 360) +", 60%, 50%)";
