@@ -279,6 +279,28 @@ class Game:
         # self.grabbedFrame = cv2.imread("sample.png")
         # remove score and lives text
         cv2.rectangle(self.grabbedFrame, (0, 0), (80, 40), (0, 0, 0), -1)
+    
+    def willBulletHitEnemy(self):
+        for enemy in self.enemies:
+            if enemy.getDirection() is not None:
+            
+                enemySpeed  = 3
+                bulletSpeed = 8
+                
+                enemy_vec = self.player.getPosition() - enemy.getPosition()
+                
+                timeBulletHit = enemy_vec.y / bulletSpeed
+                
+                enemyNewX = enemy_vec.x + enemy.getDirection() * enemySpeed * timeBulletHit
+                
+                screenWidth = self.bounding_box['width']
+                if enemyNewX > screenWidth-PLAYER_WIDTH/2:
+                    enemyNewX - screenWidth
+                enemyNewX = abs(enemyNewX)
+                
+
+                if enemyNewX-PLAYER_WIDTH/2 < self.player.getPosition().x < enemyNewX+PLAYER_WIDTH/2:
+                    self.shoot()
 
     def main(self):
         self.getFrame()
@@ -293,7 +315,8 @@ class Game:
 
             self.ai()
             self.move_player()
-
+            self.willBulletHitEnemy()
+     
             if (cv2.waitKey(1) & 0xFF) == ord('q'):
                 cv2.destroyAllWindows()
                 break
