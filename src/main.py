@@ -317,14 +317,19 @@ class Game:
         self.getFrame()
 
         FPS = 50
+        time_sleep = (FPS - time() % FPS) / 1000
         while True:
-            sleep((FPS - time() % FPS) / 1000)
+            start_time = time()
+
             self.getFrame()
             self.detect_contours()
             self.updatePositions()
             self.showDebugImage()
 
             self.ai()
+            # self.move_player()
+            will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
+            sleep(will_sleep)
             self.move_player()
             self.willBulletHitEnemy()
 
