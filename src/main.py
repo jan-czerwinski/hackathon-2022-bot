@@ -5,13 +5,17 @@ from PIL import Image
 
 
 def main():
-    bounding_box = {'top': 100, 'left': 0, 'width': 400, 'height': 300}
+    bounding_box = {'top': 8, 'left': 8, 'width': 960, 'height': 540}
 
     sct = mss()
 
     while True:
-        sct_img = sct.grab(bounding_box)
-        cv2.imshow('screen', np.array(sct_img))
+        frame = sct.grab(bounding_box)
+        cv2.imshow('screen', np.array(frame))
+        
+        
+
+
 
         if (cv2.waitKey(1) & 0xFF) == ord('q'):
             cv2.destroyAllWindows()
