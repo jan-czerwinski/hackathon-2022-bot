@@ -160,7 +160,6 @@ class Game:
 
 
         font_scale = 0.7
-        print(self.player.getPositionTuple())
         color = (255, 0, 255)
         cv2.putText(debug_img, 'pl', self.player.getPositionTuple(), font,
                             font_scale, color, 1, cv2.LINE_AA)
@@ -186,7 +185,6 @@ class Game:
         self.detectedContours = [cv2.boundingRect(contour) for contour in contours]
 
     def updatePositions(self):
-        print(self.detectedContours)
         enemies_positions = [ob for ob in self.detectedContours if 50 < ob[2] < 70]  # get big objects in x dir
         bullets_positions = [ob for ob in self.detectedContours if 6 < ob[2] < 15]  # get smol objects in x dir
 
@@ -195,14 +193,16 @@ class Game:
         self.enemies = [Enemy(Vector2D(cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in enemies_positions]
         self.bullets = [Bullet(Vector2D(cont[0] + cont[2] / 2, cont[1] + cont[3] / 2)) for cont in bullets_positions]
 
-        if len(player_contour) > 1:
-            print("DETECTED MORE THEN 1 PLAYER")
+        # if len(player_contour) > 1:
+        #     print("DETECTED MORE THEN 1 PLAYER")
+        # print(player_contour)
         self.player = Player(Vector2D(player_contour[0], player_contour[1]))
 
     def getFrame(self):
         frame_raw = self.sct.grab(self.bounding_box)
         # self.grabbedFrame = np.array(frame_raw)
         self.grabbedFrame = cv2.imread("sample.png")
+        cv2.rectangle(self.grabbedFrame, (0, 0), (80, 50), (0,0,0), -1)
 
     def main(self):
         self.getFrame()
