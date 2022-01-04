@@ -367,6 +367,7 @@ class Game:
         if key == Key.enter:
             self.playing = not self.playing
             self.player.setMoving(None)
+            self.player.move()
 
     def main(self):
         self.gameDimensions = self.getFrame()
@@ -376,12 +377,7 @@ class Game:
             on_release=None)
 
         listener.start()
-
-        FPS = 50
-        # time_sleep = (FPS - time() % FPS) / 1000
         while True:
-            # start_time = time()
-
             self.getFrame()
             self.detect_contours()
             self.updatePositions()
@@ -390,11 +386,8 @@ class Game:
                 self.shootAi()
                 self.playerMovementAi()
                 self.player.move()
-
             self.showDebugImage()
 
-            # will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
-            # sleep(will_sleep)
             if (cv2.waitKey(1) & 0xFF) == ord('q'):
                 cv2.destroyAllWindows()
                 break
