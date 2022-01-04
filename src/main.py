@@ -140,24 +140,24 @@ class Bullet(GameObject):
 
 class Player(GameObject):
     keyboard = None
+
     def __init__(self, position: Vector2D):
         super().__init__(position)
         self.keyboard = Controller()
 
         self.last_shot_time = time()
         self.moving = None
-        
+
     def setMoving(self, moving):
         self.moving = moving
-
 
     def shoot(self):
         if time() - self.last_shot_time > 1.1:
             self.last_shot_time = time()
             self.keyboard.press(Key.space)
             self.keyboard.release(Key.space)
-            
-    def move_player(self):
+
+    def move(self):
         if self.moving is None:
             self.keyboard.release(Key.left)
             self.keyboard.release(Key.right)
@@ -170,12 +170,7 @@ class Player(GameObject):
         elif self.moving == 'right':
             self.keyboard.press(Key.right)
             self.keyboard.release(Key.left)
-        
-        
-    # def checkShootAbility(self):
-    # if time() - self.last_shoot_time > 1:
-    # self.can_shoot = True
-
+    
 
 class Game:
     sct = None
@@ -187,7 +182,6 @@ class Game:
         self.detectedContours = None
         self.gameDimensions = (0, 0)
         self.startTime = time()
-
 
         self.bullets = []
         self.enemies = []
@@ -222,12 +216,11 @@ class Game:
         #     weight /= len(bullets_above_poss)
 
         for bullet_vec in bullets_above:
-            weight += 1/abs(bullet_vec) * \
+            weight += 1 / abs(bullet_vec) * \
                       (1 if bullet_vec.x < 0 else -1)
         weight *= 1400
 
         distance_from_center = self.gameDimensions[0] / 2 - player_pos.x
-
 
         center_sign = 1 if distance_from_center >= 0 else -1
         weight += abs(distance_from_center / 800) ** 2 * center_sign
@@ -248,11 +241,7 @@ class Game:
 
         # print(bullets_above)
 
-
-
-
-
-    def showDebugImage(self, enemyX):
+    def showDebugImage(self):
         debug_img = self.grabbedFrame
         for cnt in self.detectedContours:
             (x, y, w, h) = cnt
@@ -340,7 +329,7 @@ class Game:
         cv2.rectangle(self.grabbedFrame, (0, 0), (80, 40), (0, 0, 0), -1)
         return w, h
 
-    def willBulletHitEnemy(self):
+    def shootAi(self):
         for enemy in self.enemies:
             if enemy.getDirection() is not None:
 
@@ -355,13 +344,11 @@ class Game:
                 enemyNewX = enemy.getPosition().x + enemy.getDirection() * enemySpeed * timeBulletHit
 
                 if enemyNewX < PLAYER_WIDTH / 2 or enemyNewX > self.gameDimensions[0] - (PLAYER_WIDTH / 2):
-                    return 0
+                    return
 
                 if enemyNewX - PLAYER_WIDTH / 4 < self.player.getPosition().x < enemyNewX + PLAYER_WIDTH / 4:
                     self.player.shoot()
-                    print(enemyNewX)
-                    return enemyNewX
-        return 0 
+                    return
 
     def main(self):
         self.gameDimensions = self.getFrame()
@@ -374,13 +361,11 @@ class Game:
             self.getFrame()
             self.detect_contours()
             self.updatePositions()
-            self.willBulletHitEnemy()
             self.showDebugImage()
 
-            
             self.playerMovementAi()
             self.player.move()
-            self.willBulletHitEnemy()
+            self.shootAi()
 
             # will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
             # sleep(will_sleep)
