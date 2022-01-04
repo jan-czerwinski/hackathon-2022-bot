@@ -21,7 +21,7 @@
             this.enemyIndex = 0;
             this.particleIndex = 0;
             this.maxParticles = 10;
-            this.maxEnemies = 1;
+            this.maxEnemies = 6;
             this.enemiesAlive = 0;
             this.currentFrame = 0;
             this.maxLives = 3;
