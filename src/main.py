@@ -85,7 +85,7 @@ PLAYER_WIDTH = 60
 
 class GameObject:
     def __init__(self, position: Vector2D):
-        self.direction = None
+        self.direction = 0
         self.position = position
 
     def updatePosition(self, new_pos: Vector2D) -> Vector2D:
@@ -335,11 +335,9 @@ class Game:
             self.updatePositions()
             self.showDebugImage()
 
-            self.ai()
-            # self.move_player()
             self.willBulletHitEnemy()
-
-            # self.move_player()
+            self.ai()
+            self.move_player()
 
             # will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
             # sleep(will_sleep)
