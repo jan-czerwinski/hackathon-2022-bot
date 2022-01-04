@@ -121,17 +121,11 @@ class Enemy(GameObject):
         old_obj = min(old_objects, key=lambda x: abs(
             self.position - x.getPosition()))
         old_pos = old_obj.getPosition()
-        self.willBeHit = old_obj.getWillBeHit()
+        
         if old_pos.x != self.position.x:
             self.direction = 1 if old_pos.x < self.position.x else -1
         else:
             self.direction = old_obj.getDirection()
-    
-    def setWillBeHit(self):
-        self.willBeHit = True
-        
-    def getWillBeHit(self):
-        return self.willBeHit
 
 
 
@@ -144,12 +138,12 @@ class Bullet(GameObject):
 class Player(GameObject):
     def __init__(self, position: Vector2D):
         super().__init__(position)
-        self.can_shoot = True
-        self.last_shoot_time = time()
+        # self.can_shoot = True
+        # self.last_shoot_time = time()
 
-    def checkShootAbility(self):
-        if self.last_shoot_time - time() > 1:
-            self.can_shoot = True
+    # def checkShootAbility(self):
+        # if time() - self.last_shoot_time > 1:
+            # self.can_shoot = True
 
 
 class Game:
@@ -210,8 +204,8 @@ class Game:
     def shoot(self):
         self.keyboard.press(Key.space)
         self.keyboard.release(Key.space)
-        self.player.can_shoot = False
-        self.player.last_shoot_time = time()
+        # self.player.can_shoot = False
+        # self.player.last_shoot_time = time()
 
     def showDebugImage(self):
         debug_img = self.grabbedFrame
@@ -233,7 +227,7 @@ class Game:
                         font_scale, color, 1, cv2.LINE_AA)
 
         for enemy in self.enemies:
-            cv2.putText(debug_img, f'enm {"AAAAA" if enemy.getWillBeHit() else ""}', enemy.getPositionTuple(), font,
+            cv2.putText(debug_img, f'enm', enemy.getPositionTuple(), font,
                         font_scale, color, 1, cv2.LINE_AA)
 
         name = 'debug image'
@@ -301,12 +295,13 @@ class Game:
         cv2.rectangle(self.grabbedFrame, (0, 0), (80, 40), (0, 0, 0), -1)
 
     def willBulletHitEnemy(self):
-        if not self.player.can_shoot:
-            self.player.checkShootAbility()
-            return 
+        # if not self.player.can_shoot:
+        #     self.player.checkShootAbility()
+        #     return 
+        
         
         for enemy in self.enemies:
-            if enemy.getDirection() is not None and not enemy.getWillBeHit():
+            if enemy.getDirection() is not None:
 
                 enemySpeed = 2
                 bulletSpeed = 8
@@ -324,7 +319,6 @@ class Game:
 
                 if enemyNewX - PLAYER_WIDTH / 2 < self.player.getPosition().x < enemyNewX + PLAYER_WIDTH / 2:
                     self.shoot()
-                    enemy.setWillBeHit()
                     return
 
     def main(self):
@@ -342,9 +336,9 @@ class Game:
 
             self.ai()
             # self.move_player()
+            self.willBulletHitEnemy()
 
             self.move_player()
-            self.willBulletHitEnemy()
 
             will_sleep = 0 if time_sleep - (time() - start_time) < 0 else time_sleep - (time() - start_time)
             sleep(will_sleep)
@@ -361,5 +355,5 @@ if __name__ == '__main__':
 OG game has 50 fps
 bullet moves 8 px/frame
 player also movees 8px/frame
-enemies move randommly (all 2px or 3px) /frame=
+enemies move randommly (2px or 3px) /frame=
 '''
