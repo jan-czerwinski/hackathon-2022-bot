@@ -206,7 +206,7 @@ class Game:
 
         distances = [x.getPosition() - player_pos for x in self.bullets]
         bullets_above = list(
-            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH * 1.2) and abs(dist.y) < 120, distances))
+            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH * 1.4) and abs(dist.y) < 120, distances))
 
         weight = 0
         # bullets_around_poss = [bul.getPosition() for bul in bullets_around]
@@ -221,7 +221,7 @@ class Game:
         for bullet_vec in bullets_above:
             weight += 1 / abs(bullet_vec) * \
                       (1 if bullet_vec.x < 0 else -1)
-        weight *= 1400
+        weight *= 1600
 
         distance_from_center = self.gameDimensions[0] / 2 - player_pos.x
 
