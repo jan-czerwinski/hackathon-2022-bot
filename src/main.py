@@ -184,7 +184,7 @@ class Game:
         self.detectedContours = None
         self.gameDimensions = (0, 0)
         self.startTime = time()
-        self.playing = False
+        self.playing = True
 
         self.bullets = []
         self.enemies = []
@@ -196,7 +196,7 @@ class Game:
             filter(lambda dist: abs(dist.getPosition().x) < (PLAYER_WIDTH * 2.5) and abs(dist.getPosition().y) < 70,
                    self.bullets))
         if bullets_horizontal:
-            print(bullets_horizontal)
+            return bullets_horizontal[0]
 
     def playerMovementAi(self):
         player_pos = self.player.getPosition()
@@ -206,10 +206,10 @@ class Game:
 
         distances = [x.getPosition() - player_pos for x in self.bullets]
         bullets_above = list(
-            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH * 1.2) and abs(dist.y) < 200, distances))
+            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH * 1.4) and abs(dist.y) < 200, distances))
 
         weight = 0
-        bullets_around_poss = [bul.getPosition() for bul in bullets_around]
+        # bullets_around_poss = [bul.getPosition() for bul in bullets_around]
 
         # print(bullets_above_poss)
         # for bullet_vec in bullets_around_poss:
@@ -226,22 +226,29 @@ class Game:
         distance_from_center = self.gameDimensions[0] / 2 - player_pos.x
 
         center_sign = 1 if distance_from_center >= 0 else -1
-        weight += abs(distance_from_center / 1000) ** 2 * center_sign
-        weight += random.uniform(-0.05, 0.05)
+        spierdalanie_od_brzegu_weight = abs(distance_from_center / 1000) ** 2 * center_sign
+        weight += random.uniform(-0.02, 0.02)
 
-        # print(weight)
 
-        weight = weight
-        # print(weight)
+        print(weight, " ", spierdalanie_od_brzegu_weight)
+
+
+        weight += spierdalanie_od_brzegu_weight
+        # weight += weight_around
 
         # - left + right
-        self.findUnavoidableBullets()
-        if weight > 0:
+        # unavoid_bullet = self.findUnavoidableBullets()
+        # if unavoid_bullet:
+        #     print(weight," " , abs(unavoid_bullet.getPosition() - player_pos) * 0.02)
+        #     weight += abs(unavoid_bullet.getPosition() - player_pos) * -0.01
+
+        hysteresis = 0
+        if weight > hysteresis:
             self.player.setMoving("right")
-        elif weight == 0:
-            self.player.setMoving(None)
-        else:
+        elif weight < -hysteresis:
             self.player.setMoving("left")
+        else:
+            self.player.setMoving(None)
 
         # print(bullets_above)
 
