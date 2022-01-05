@@ -184,7 +184,7 @@ class Game:
         self.detectedContours = None
         self.gameDimensions = (0, 0)
         self.startTime = time()
-        self.playing = True
+        self.playing = False
 
         self.bullets = []
         self.enemies = []
@@ -230,7 +230,7 @@ class Game:
         weight += random.uniform(-0.02, 0.02)
 
 
-        print(weight, " ", uciekanie_od_brzegu_weight)
+        # print(weight, " ", uciekanie_od_brzegu_weight)
 
 
         weight += uciekanie_od_brzegu_weight
@@ -278,10 +278,16 @@ class Game:
         cv2.putText(debug_img, f't: {int(time() - self.startTime)}', (0, 50), font,
                     font_scale, (255, 255, 255), 1, cv2.LINE_AA)
 
+        scale_percent = 30  # percent of original size
+        width = int(debug_img.shape[1] * scale_percent / 100)
+        height = int(debug_img.shape[0] * scale_percent / 100)
+        dim = (width, height)
+        # resize image
+        resized_debug_img = cv2.resize(debug_img, dim, interpolation=cv2.INTER_AREA)
         name = 'debug image'
         cv2.namedWindow(name)
-        cv2.moveWindow(name, 400, 900)
-        cv2.imshow(name, debug_img)
+        # cv2.moveWindow(name, 400, 900)
+        cv2.imshow(name, resized_debug_img)
 
     def detect_contours(self):
         gray = cv2.cvtColor(self.grabbedFrame, cv2.COLOR_BGR2GRAY)
@@ -389,7 +395,7 @@ class Game:
         listener.start()
         
         while True:
-            self.getFrame()
+            self.gameDimensions = self.getFrame()
             self.detect_contours()
             self.updatePositions()
 
