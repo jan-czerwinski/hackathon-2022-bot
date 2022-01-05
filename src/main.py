@@ -82,7 +82,8 @@ class Vector2D:
 
 BULLET_WIDTH = 8
 PLAYER_WIDTH = 60
-
+PLAYER_HEIGHT = 20
+BULLET_HEIGHT = 20
 
 class GameObject:
     def __init__(self, position: Vector2D):
@@ -153,7 +154,7 @@ class Player(GameObject):
         self.moving = moving
 
     def shoot(self):
-        if time() - self.last_shot_time > 1.1:
+        if time() - self.last_shot_time > 1.04:
             self.last_shot_time = time()
             self.keyboard.press(Key.space)
             self.keyboard.release(Key.space)
@@ -346,24 +347,23 @@ class Game:
 
     def shootAi(self):
         for enemy in self.enemies:
-            if enemy.getDirection() is not None:
+            if enemy.getDirection() is None:
+                return
 
-                enemySpeed = 2
-                bulletSpeed = 8
+            enemySpeed = 2.0
+            bulletSpeed = 7.4
 
-                enemy_vec = self.player.getPosition() - enemy.getPosition()
-
-                timeBulletHit = abs(enemy_vec.y / bulletSpeed)
-                # print(timeBulletHit)
-
-                enemyNewX = enemy.getPosition().x + enemy.getDirection() * enemySpeed * timeBulletHit
-
-                if enemyNewX < PLAYER_WIDTH / 2 or enemyNewX > self.gameDimensions[0] - (PLAYER_WIDTH / 2):
-                    return
-
-                if enemyNewX - 10 < self.player.getPosition().x < enemyNewX + 10:
-                    self.player.shoot()
-                    return
+            enemy_vec = self.player.getPosition() - enemy.getPosition()
+            timeBulletHit = abs(enemy_vec.y / bulletSpeed)
+            enemyNewX = enemy.getPosition().x + (enemy.getDirection() * enemySpeed * timeBulletHit)
+        
+            
+            if enemyNewX < PLAYER_WIDTH / 2 or enemyNewX > self.gameDimensions[0] - (PLAYER_WIDTH / 2):
+                return
+                
+            if enemyNewX - 10 < self.player.getPosition().x < enemyNewX + 10:
+                self.player.shoot()
+                return
 
     def togglePlayingOnEnter(self, key):
         if key == Key.enter:
