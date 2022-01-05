@@ -202,11 +202,11 @@ class Game:
         player_pos = self.player.getPosition()
         # bullets directly above and close
 
-        bullets_around = [bul for bul in self.bullets if abs(bul.getPosition() - player_pos) < 200]
+        bullets_around = [bul for bul in self.bullets if abs(bul.getPosition() - player_pos) < 150]
 
         distances = [x.getPosition() - player_pos for x in self.bullets]
         bullets_above = list(
-            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH * 1.4) and abs(dist.y) < 200, distances))
+            filter(lambda dist: abs(dist.x) < (PLAYER_WIDTH * 1.2) and abs(dist.y) < 120, distances))
 
         weight = 0
         # bullets_around_poss = [bul.getPosition() for bul in bullets_around]
@@ -221,19 +221,19 @@ class Game:
         for bullet_vec in bullets_above:
             weight += 1 / abs(bullet_vec) * \
                       (1 if bullet_vec.x < 0 else -1)
-        weight *= 1600
+        weight *= 1400
 
         distance_from_center = self.gameDimensions[0] / 2 - player_pos.x
 
         center_sign = 1 if distance_from_center >= 0 else -1
-        spierdalanie_od_brzegu_weight = abs(distance_from_center / 1000) ** 2 * center_sign
+        uciekanie_od_brzegu_weight = abs(distance_from_center / 1000) ** 2 * center_sign
         weight += random.uniform(-0.02, 0.02)
 
 
-        print(weight, " ", spierdalanie_od_brzegu_weight)
+        print(weight, " ", uciekanie_od_brzegu_weight)
 
 
-        weight += spierdalanie_od_brzegu_weight
+        weight += uciekanie_od_brzegu_weight
         # weight += weight_around
 
         # - left + right
